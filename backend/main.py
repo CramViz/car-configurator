@@ -7,13 +7,16 @@ from solver import propagate_domains, solve_configuration
 
 app = FastAPI(title="Car Configurator CSP API")
 
-# CORS pour permettre l'accès depuis le front (localhost:5173, 3000, etc.)
+# CORS pour permettre l'accès depuis le front (localhost:5173, 3000, file://, etc.)
 origins = [
     "http://localhost",
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8001",
+    "null",  # file:// origin quand on ouvre index.html directement
 ]
 
 app.add_middleware(
@@ -39,6 +42,11 @@ class SolveResponse(BaseModel):
     status: str
 
 
+@app.get("/")
+def root():
+    return {"message": "Car Configurator API is running"}
+
+
 @app.post("/propagate", response_model=PropagationResponse)
 def api_propagate(req: ConfigRequest) -> Any:
     """
@@ -61,3 +69,4 @@ def api_solve(req: ConfigRequest) -> Any:
 @app.get("/ping")
 def ping() -> Dict[str, str]:
     return {"message": "Car Configurator API is running"}
+
