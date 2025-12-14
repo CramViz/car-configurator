@@ -12,48 +12,49 @@ const VARIABLES = [
   "pack",
 ];
 
-// Labels lisibles (doivent être cohérents avec solver.py)
+// Labels lisibles (cohérents avec solver.py backend)
 const LABELS = {
   model: {
-    compact: "Compact Urbain",
-    suv: "SUV Trail",
-    sport_gt: "Coupé GT",
-    luxury_sedan: "Berline Luxe",
+    civic: "Honda Civic",
+    golf: "Volkswagen Golf",
+    "330i": "BMW 330i",
+    x3: "BMW X3",
+    mustang: "Ford Mustang",
   },
   engine: {
-    petrol_1_6: "Essence 1.6L",
-    petrol_2_0t: "Essence 2.0L Turbo",
-    diesel_2_0: "Diesel 2.0L",
-    hybrid_2_0: "Hybride 2.0L",
-    electric_lr: "Électrique Long Range",
+    petrol_1_5: "Essence 1.5L (130 ch)",
+    petrol_2_0: "Essence 2.0L (180 ch)",
+    petrol_3_0: "Essence 3.0L (360 ch)",
+    diesel_2_0: "Diesel 2.0L (150 ch)",
+    hybrid: "Hybride 2.0L",
   },
   transmission: {
-    manual: "Manuelle 6 rapports",
-    auto8: "Auto 8 rapports",
+    manual: "Manuelle 6 vitesses",
+    automatic: "Automatique 8 vitesses",
   },
   drivetrain: {
-    fwd: "Traction (FWD)",
+    fwd: "Traction avant (FWD)",
     rwd: "Propulsion (RWD)",
     awd: "Transmission intégrale (AWD)",
   },
   color: {
-    white: "Blanc Nacré",
-    black: "Noir Onyx",
-    red: "Rouge Carmin",
-    blue: "Bleu Horizon",
-    silver: "Gris Argent",
+    white: "Blanc pur",
+    black: "Noir profond",
+    silver: "Argent métallisé",
+    blue: "Bleu électrique",
+    red: "Rouge vif",
+    gray: "Gris titane",
   },
   interior: {
-    cloth: "Tissu",
-    leather: "Cuir",
-    alcantara: "Alcantara",
+    cloth: "Intérieur tissu",
+    leather: "Cuir standard",
+    premium_leather: "Cuir premium Nappa",
   },
   pack: {
-    none: "Aucun pack",
-    tech: "Pack Tech",
-    premium: "Pack Premium",
-    offroad: "Pack Offroad",
-    performance: "Pack Performance",
+    base: "Pack Base",
+    sport: "Pack Sport",
+    luxury: "Pack Luxe",
+    amg: "Pack AMG Performance",
   },
 };
 
@@ -65,77 +66,87 @@ const resetBtn = document.getElementById("reset-btn");
 const carBadge = document.getElementById("car-badge");
 const carDetails = document.getElementById("car-details");
 const BRANDS = {
-  compact: "Civic",
-  suv: "Trail-X",
-  sport_gt: "Apex GT",
-  luxury_sedan: "Aurora",
+  civic: "Civic",
+  golf: "Golf",
+  "330i": "330i",
+  x3: "X3",
+  mustang: "Mustang",
 };
 const PRESETS = {
   urban: {
-    model: "compact",
-    engine: "petrol_1_6",
+    model: "civic",
+    engine: "petrol_1_5",
     transmission: "manual",
     drivetrain: "fwd",
     color: "silver",
     interior: "cloth",
-    pack: "tech",
+    pack: "base",
   },
-  trail: {
-    model: "suv",
-    engine: "diesel_2_0",
-    transmission: "auto8",
-    drivetrain: "awd",
-    color: "black",
+  family: {
+    model: "golf",
+    engine: "petrol_2_0",
+    transmission: "automatic",
+    drivetrain: "fwd",
+    color: "gray",
     interior: "leather",
-    pack: "offroad",
+    pack: "sport",
   },
-  gt: {
-    model: "sport_gt",
-    engine: "petrol_2_0t",
-    transmission: "auto8",
+  executive: {
+    model: "330i",
+    engine: "petrol_2_0",
+    transmission: "automatic",
     drivetrain: "rwd",
-    color: "red",
-    interior: "alcantara",
-    pack: "performance",
+    color: "black",
+    interior: "premium_leather",
+    pack: "luxury",
   },
-  lux: {
-    model: "luxury_sedan",
-    engine: "hybrid_2_0",
-    transmission: "auto8",
+  offroad: {
+    model: "x3",
+    engine: "petrol_2_0",
+    transmission: "automatic",
     drivetrain: "awd",
     color: "blue",
     interior: "leather",
-    pack: "premium",
+    pack: "sport",
+  },
+  performance: {
+    model: "mustang",
+    engine: "petrol_3_0",
+    transmission: "automatic",
+    drivetrain: "rwd",
+    color: "red",
+    interior: "premium_leather",
+    pack: "amg",
   },
 };
 
 const ENGINE_SPECS = {
-  petrol_1_6: { hp: 130, accel: 9.8, range: 650, price: 0 },
-  petrol_2_0t: { hp: 210, accel: 6.7, range: 620, price: 5000 },
-  diesel_2_0: { hp: 170, accel: 8.4, range: 900, price: 3000 },
-  hybrid_2_0: { hp: 190, accel: 7.9, range: 850, price: 6000 },
-  electric_lr: { hp: 320, accel: 4.8, range: 540, price: 12000 },
+  petrol_1_5: { hp: 130, accel: 10.2, range: 620, price: 0 },
+  petrol_2_0: { hp: 180, accel: 8.1, range: 580, price: 3000 },
+  petrol_3_0: { hp: 360, accel: 5.1, range: 520, price: 8500 },
+  diesel_2_0: { hp: 150, accel: 9.5, range: 750, price: 2200 },
+  hybrid: { hp: 160, accel: 8.8, range: 680, price: 4500 },
 };
 
 const MODEL_BASE = {
-  compact: { price: 24000, hp: 0, accel: 0, range: 0 },
-  suv: { price: 38000, hp: 10, accel: 0.3, range: -40 },
-  sport_gt: { price: 55000, hp: 50, accel: -0.8, range: -50 },
-  luxury_sedan: { price: 62000, hp: 20, accel: -0.2, range: -20 },
+  civic: { price: 28000, hp: 0, accel: 0, range: 0 },
+  golf: { price: 32000, hp: 5, accel: -0.2, range: 50 },
+  "330i": { price: 52000, hp: 10, accel: -0.3, range: -40 },
+  x3: { price: 58000, hp: 15, accel: -0.4, range: -100 },
+  mustang: { price: 65000, hp: 50, accel: -1.0, range: -120 },
 };
 
 const PACK_EFFECT = {
-  none: { price: 0, hp: 0, accel: 0, range: 0 },
-  tech: { price: 1500, hp: 0, accel: 0, range: 0 },
-  premium: { price: 4000, hp: 0, accel: 0, range: 0 },
-  offroad: { price: 2000, hp: -5, accel: 0.4, range: -30 },
-  performance: { price: 4500, hp: 40, accel: -0.6, range: -40 },
+  base: { price: 0, hp: 0, accel: 0, range: 0 },
+  sport: { price: 2500, hp: 10, accel: -0.3, range: -20 },
+  luxury: { price: 4500, hp: 0, accel: 0, range: -10 },
+  amg: { price: 6000, hp: 30, accel: -0.6, range: -40 },
 };
 
 const DRIVE_EFFECT = {
   fwd: { price: 0, range: 0, accel: 0 },
-  rwd: { price: 400, range: -5, accel: -0.05 },
-  awd: { price: 1800, range: -30, accel: 0.15 },
+  rwd: { price: 1200, range: -15, accel: -0.1 },
+  awd: { price: 2500, range: -50, accel: 0.2 },
 };
 
 // Initialise les selects avec des options vides (remplies après premier /propagate)
@@ -163,43 +174,39 @@ function getAssignments() {
 function pickColor(assignments) {
   const colorChoice = assignments.color;
   const colorMap = {
-    white: "#e5e7eb",
-    black: "#0f172a",
-    red: "#ef4444",
-    blue: "#2563eb",
-    silver: "#cbd5e1",
+    white: "#f5f5f5",
+    black: "#1a1a1a",
+    silver: "#c0c0c0",
+    blue: "#0066cc",
+    red: "#dc143c",
+    gray: "#808080",
   };
   return colorChoice && colorMap[colorChoice] ? colorMap[colorChoice] : "#38bdf8";
 }
 
 function pickAccent(assignments) {
-  if (assignments.pack === "premium") return "#f59e0b";
-  if (assignments.pack === "performance") return "#ef4444";
-  if (assignments.pack === "offroad") return "#22c55e";
-  if (assignments.model === "sport_gt") return "#ef4444";
-  if (assignments.model === "luxury_sedan") return "#fbbf24";
-  if (assignments.model === "suv") return "#22c55e";
+  if (assignments.pack === "amg") return "#ff0000";
+  if (assignments.pack === "luxury") return "#fbbf24";
+  if (assignments.pack === "sport") return "#ef4444";
+  if (assignments.model === "mustang") return "#ff0000";
+  if (assignments.model === "330i" || assignments.model === "x3") return "#0066cc";
   return "#38bdf8";
 }
 
 function rideSettings(assignments) {
-  // Default
   let ride = "0px";
   let wheel = "52px";
   let offset = "58px";
 
-  if (assignments.model === "suv" || assignments.pack === "offroad") {
-    ride = "-4px";
-    wheel = "58px";
-    offset = "64px";
-  }
-  if (assignments.model === "sport_gt" || assignments.pack === "performance") {
+  if (assignments.model === "mustang" || assignments.pack === "sport") {
     ride = "6px";
     wheel = "50px";
     offset = "56px";
   }
-  if (assignments.model === "luxury_sedan") {
+  if (assignments.model === "x3" || assignments.drivetrain === "awd") {
+    ride = "-2px";
     wheel = "54px";
+    offset = "60px";
   }
   return { ride, wheel, offset };
 }

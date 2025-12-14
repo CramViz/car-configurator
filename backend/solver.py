@@ -7,57 +7,58 @@ from ortools.sat.python import cp_model
 # -----------------------
 
 VARIABLES = {
-    "model": ["compact", "suv", "sport_gt", "luxury_sedan"],
-    "engine": ["petrol_1_6", "petrol_2_0t", "diesel_2_0", "hybrid_2_0", "electric_lr"],
-    "transmission": ["manual", "auto8"],
+    "model": ["civic", "golf", "330i", "x3", "mustang"],
+    "engine": ["petrol_1_5", "petrol_2_0", "petrol_3_0", "diesel_2_0", "hybrid"],
+    "transmission": ["manual", "automatic"],
     "drivetrain": ["fwd", "rwd", "awd"],
-    "color": ["white", "black", "red", "blue", "silver"],
-    "interior": ["cloth", "leather", "alcantara"],
-    "pack": ["none", "tech", "premium", "offroad", "performance"],
+    "color": ["white", "black", "silver", "blue", "red", "gray"],
+    "interior": ["cloth", "leather", "premium_leather"],
+    "pack": ["base", "sport", "luxury", "amg"],
 }
 
 # Description lisible pour l'UI
 LABELS = {
     "model": {
-        "compact": "Compact Urbain",
-        "suv": "SUV Trail",
-        "sport_gt": "Coupé GT",
-        "luxury_sedan": "Berline Luxe",
+        "civic": "Honda Civic",
+        "golf": "Volkswagen Golf",
+        "330i": "BMW 330i",
+        "x3": "BMW X3",
+        "mustang": "Ford Mustang",
     },
     "engine": {
-        "petrol_1_6": "Essence 1.6L",
-        "petrol_2_0t": "Essence 2.0L Turbo",
-        "diesel_2_0": "Diesel 2.0L",
-        "hybrid_2_0": "Hybride 2.0L",
-        "electric_lr": "Électrique Long Range",
+        "petrol_1_5": "Essence 1.5L (130 ch)",
+        "petrol_2_0": "Essence 2.0L (180 ch)",
+        "petrol_3_0": "Essence 3.0L (360 ch)",
+        "diesel_2_0": "Diesel 2.0L (150 ch)",
+        "hybrid": "Hybride 2.0L",
     },
     "transmission": {
-        "manual": "Manuelle 6 rapports",
-        "auto8": "Auto 8 rapports",
+        "manual": "Manuelle 6 vitesses",
+        "automatic": "Automatique 8 vitesses",
     },
     "drivetrain": {
-        "fwd": "Traction (FWD)",
+        "fwd": "Traction avant (FWD)",
         "rwd": "Propulsion (RWD)",
         "awd": "Transmission intégrale (AWD)",
     },
     "color": {
-        "white": "Blanc Nacré",
-        "black": "Noir Onyx",
-        "red": "Rouge Carmin",
-        "blue": "Bleu Horizon",
-        "silver": "Gris Argent",
+        "white": "Blanc pur",
+        "black": "Noir profond",
+        "silver": "Argent métallisé",
+        "blue": "Bleu électrique",
+        "red": "Rouge vif",
+        "gray": "Gris titane",
     },
     "interior": {
-        "cloth": "Tissu",
-        "leather": "Cuir",
-        "alcantara": "Alcantara",
+        "cloth": "Intérieur tissu",
+        "leather": "Cuir standard",
+        "premium_leather": "Cuir premium Nappa",
     },
     "pack": {
-        "none": "Aucun pack",
-        "tech": "Pack Tech",
-        "premium": "Pack Premium",
-        "offroad": "Pack Offroad",
-        "performance": "Pack Performance",
+        "base": "Pack Base",
+        "sport": "Pack Sport",
+        "luxury": "Pack Luxe",
+        "amg": "Pack AMG Performance",
     },
 }
 
@@ -112,99 +113,56 @@ def _build_model(assignments: Dict[str, Optional[str]]) -> Tuple[cp_model.CpMode
     P = INDEX["pack"]
 
     # -------------------------
-    # Règles métier réalistes
+    # Contraintes métier réalistes
     # -------------------------
 
-    # Compact : moteur 1.6/2.0t/hybride, pas AWD, pas Alcantara, pas offroad/performance
-    model.AddForbiddenAssignments(
-        [m, e],
-        [
-            (M["compact"], E["diesel_2_0"]),
-            (M["compact"], E["electric_lr"]),
-        ],
-    )
-    model.AddForbiddenAssignments([m, d], [(M["compact"], D["awd"])])
-    model.AddForbiddenAssignments([m, i], [(M["compact"], I["alcantara"])])
-    model.AddForbiddenAssignments([m, p], [(M["compact"], P["offroad"]), (M["compact"], P["performance"])])
-    # Hybride compact uniquement en auto
-    model.AddForbiddenAssignments([m, e, t], [(M["compact"], E["hybrid_2_0"], T["manual"])])
+    # Honda Civic : moteurs 1.5L ou 2.0L, traction avant, pas de RWD
+    model.AddForbiddenAssignments([m, e], [(M["civic"], E["petrol_3_0"]), (M["civic"], E["diesel_2_0"])])
+    model.AddForbiddenAssignments([m, d], [(M["civic"], D["rwd"]), (M["civic"], D["awd"])])
 
-    # SUV : auto obligatoire, moteurs 2.0t / diesel / hybrid, pas performance
-    model.AddForbiddenAssignments([m, t], [(M["suv"], T["manual"])])
-    model.AddForbiddenAssignments([m, e], [(M["suv"], E["petrol_1_6"])])
-    model.AddForbiddenAssignments([m, p], [(M["suv"], P["performance"])])
-    # Offroad uniquement pour SUV et nécessite AWD
-    model.AddForbiddenAssignments([p, m], [(P["offroad"], M["compact"]), (P["offroad"], M["sport_gt"]), (P["offroad"], M["luxury_sedan"])])
-    model.AddForbiddenAssignments([p, d], [(P["offroad"], D["fwd"]), (P["offroad"], D["rwd"])])
+    # VW Golf : moteurs 1.5L, 2.0L ou diesel, traction avant principalement
+    model.AddForbiddenAssignments([m, e], [(M["golf"], E["petrol_3_0"])])
+    model.AddForbiddenAssignments([m, d], [(M["golf"], D["rwd"])])
 
-    # Sport GT : auto, RWD/AWD, moteurs 2.0t ou électrique, pas cloth, pas offroad, au moins Tech
-    model.AddForbiddenAssignments([m, t], [(M["sport_gt"], T["manual"])])
-    model.AddForbiddenAssignments([m, d], [(M["sport_gt"], D["fwd"])])
-    model.AddForbiddenAssignments([m, i], [(M["sport_gt"], I["cloth"])])
-    model.AddForbiddenAssignments([m, p], [(M["sport_gt"], P["none"]), (M["sport_gt"], P["offroad"])])
-    model.AddForbiddenAssignments(
-        [m, e],
-        [
-            (M["sport_gt"], E["petrol_1_6"]),
-            (M["sport_gt"], E["diesel_2_0"]),
-            (M["sport_gt"], E["hybrid_2_0"]),
-        ],
-    )
+    # BMW 330i : moteur 2.0L uniquement, RWD ou AWD, automatique obligatoire
+    model.AddForbiddenAssignments([m, e], [(M["330i"], E["petrol_1_5"]), (M["330i"], E["petrol_3_0"]), (M["330i"], E["diesel_2_0"]), (M["330i"], E["hybrid"])])
+    model.AddForbiddenAssignments([m, d], [(M["330i"], D["fwd"])])
+    model.AddForbiddenAssignments([m, t], [(M["330i"], T["manual"])])
 
-    # Luxury Sedan : auto, RWD/AWD, moteurs 2.0t/hybride/électrique, pas cloth, pack >= Tech, pas offroad/performance
-    model.AddForbiddenAssignments([m, t], [(M["luxury_sedan"], T["manual"])])
-    model.AddForbiddenAssignments([m, d], [(M["luxury_sedan"], D["fwd"])])
-    model.AddForbiddenAssignments([m, i], [(M["luxury_sedan"], I["cloth"])])
-    model.AddForbiddenAssignments(
-        [m, e],
-        [
-            (M["luxury_sedan"], E["petrol_1_6"]),
-            (M["luxury_sedan"], E["diesel_2_0"]),
-        ],
-    )
-    model.AddForbiddenAssignments([m, p], [(M["luxury_sedan"], P["none"]), (M["luxury_sedan"], P["offroad"]), (M["luxury_sedan"], P["performance"])])
+    # BMW X3 : moteur 2.0L ou 3.0L, AWD obligatoire, automatique
+    model.AddForbiddenAssignments([m, e], [(M["x3"], E["petrol_1_5"]), (M["x3"], E["diesel_2_0"]), (M["x3"], E["hybrid"])])
+    model.AddForbiddenAssignments([m, d], [(M["x3"], D["fwd"]), (M["x3"], D["rwd"])])
+    model.AddForbiddenAssignments([m, t], [(M["x3"], T["manual"])])
 
-    # Electric LR : auto, AWD, pas cloth, pas offroad/performance, seulement GT ou Luxury
-    model.AddForbiddenAssignments([e, t], [(E["electric_lr"], T["manual"])])
-    model.AddForbiddenAssignments([e, d], [(E["electric_lr"], D["fwd"]), (E["electric_lr"], D["rwd"])])
-    model.AddForbiddenAssignments([e, i], [(E["electric_lr"], I["cloth"])])
-    model.AddForbiddenAssignments([e, p], [(E["electric_lr"], P["offroad"]), (E["electric_lr"], P["performance"])])
-    model.AddForbiddenAssignments(
-        [m, e],
-        [
-            (M["compact"], E["electric_lr"]),
-            (M["suv"], E["electric_lr"]),
-        ],
-    )
+    # Ford Mustang : moteur 3.0L ou 2.0L, RWD ou AWD, automatique conseillé
+    model.AddForbiddenAssignments([m, e], [(M["mustang"], E["petrol_1_5"]), (M["mustang"], E["diesel_2_0"]), (M["mustang"], E["hybrid"])])
+    model.AddForbiddenAssignments([m, d], [(M["mustang"], D["fwd"])])
 
-    # Petrol 1.6 : uniquement sur compact
-    model.AddForbiddenAssignments(
-        [m, e],
-        [
-            (M["suv"], E["petrol_1_6"]),
-            (M["sport_gt"], E["petrol_1_6"]),
-            (M["luxury_sedan"], E["petrol_1_6"]),
-        ],
-    )
+    # Moteur 3.0L : seulement BMW X3 et Mustang
+    for model_name, m_idx in M.items():
+        if model_name not in ("x3", "mustang"):
+            model.AddForbiddenAssignments([m, e], [(m_idx, E["petrol_3_0"])])
 
-    # Diesel : pas sur GT ni Luxury
-    model.AddForbiddenAssignments([m, e], [(M["sport_gt"], E["diesel_2_0"]), (M["luxury_sedan"], E["diesel_2_0"])])
+    # Diesel : uniquement VW Golf
+    for model_name, m_idx in M.items():
+        if model_name != "golf":
+            model.AddForbiddenAssignments([m, e], [(m_idx, E["diesel_2_0"])])
 
-    # AWD toujours en auto8
+    # Hybride : uniquement Civic et Golf
+    for model_name, m_idx in M.items():
+        if model_name not in ("civic", "golf"):
+            model.AddForbiddenAssignments([m, e], [(m_idx, E["hybrid"])])
+
+    # Pack AMG : seulement BMW 330i et X3
+    for model_name, m_idx in M.items():
+        if model_name not in ("330i", "x3"):
+            model.AddForbiddenAssignments([m, p], [(m_idx, P["amg"])])
+
+    # Cuir premium : incompatible avec pack base
+    model.AddForbiddenAssignments([i, p], [(I["premium_leather"], P["base"])])
+
+    # AWD : toujours automatique
     model.AddForbiddenAssignments([d, t], [(D["awd"], T["manual"])])
-
-    # Premium requiert auto8
-    model.AddForbiddenAssignments([p, t], [(P["premium"], T["manual"])])
-
-    # Performance uniquement sur Sport GT et auto8
-    model.AddForbiddenAssignments([p, m], [(P["performance"], M["compact"]), (P["performance"], M["suv"]), (P["performance"], M["luxury_sedan"])])
-    model.AddForbiddenAssignments([p, t], [(P["performance"], T["manual"])])
-
-    # Tech requis pour Sport GT et Luxury
-    model.AddForbiddenAssignments([m, p], [(M["sport_gt"], P["none"]), (M["luxury_sedan"], P["none"])])
-
-    # Couleur rouge non disponible pour Luxury
-    model.AddForbiddenAssignments([m, c], [(M["luxury_sedan"], C["red"])])
 
     return model, vars_int
 
